@@ -66,14 +66,22 @@ def register():
     data = request.get_json()
     username = data['username']
     password = data['password']
-    with Session() as session:
-        if session.query(User).filter_by(username=username.lower()).first():
-            return jsonify({"status": "not_success", "message": "Пользователь уже существует!"}), 409
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        current_time = datetime.now().strftime("%d-%m-%Y")
-        new_user = User(username=username.lower(), password=hashed_password, registrationdate=current_time)
-        session.add(new_user)
-        session.commit()
+
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    current_time = datetime.now().strftime("%d-%m-%Y")
+    new_user = User(username=username.lower(), password=hashed_password, registrationdate=current_time)
+
+    try:
+        with Session() as session:
+            if session.query(User).filter_by(username=username.lower()).first():
+                return jsonify({"status": "not_success", "message": "Пользователь уже существует!"}), 409
+
+            session.add(new_user)
+            session.commit()
+
+    except Exception as e:
+        # Откат транзакции в случае ошибки
+        return jsonify({"status": "not_success", "message": "Ошибка при регистрации!"}), 500
 
     return jsonify({"status": "success", "message": "Пользователь зарегистрирован!"}), 200
 
