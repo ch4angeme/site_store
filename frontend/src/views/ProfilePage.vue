@@ -26,16 +26,16 @@ import EventBus from '../Refresh';
 export default {
   data() {
     return {
-      user: null,
-      error: null,
+      user: '',
+      error: '',
       newUsername: '',
     };
   },
   async created() {
-    await this.Profile();
+    await this.fetchProfile();
   },
   methods: {
-    async Profile() {
+    async fetchProfile() {
       try {
         const token = localStorage.getItem('access_token');
         const response = await axios.get('http://localhost:5000/api/users/user/profile', {
@@ -45,11 +45,7 @@ export default {
         });
         this.user = response.data;
       } catch (error) {
-        if (error.response && error.response.data) {
-          this.error = error.response.data.message || 'Ошибка получения данных профиля';
-        } else {
-          this.error = 'Ошибка соединения с сервером';
-        }
+        this.handleError(error, 'Ошибка получения данных профиля');
       }
     },
     async updateUsername() {
@@ -62,16 +58,28 @@ export default {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        // Обновляем имя пользователя в локальном состоянии
         this.user.username = response.data.username;
         EventBus.emit('username-updated', this.user.username);
         this.newUsername = '';
+        this.error = '';
+
+        // Уведомление об успешном обновлении
+        alert('Имя пользователя успешно обновлено на: ' + this.user.username);
       } catch (error) {
-        if (error.response && error.response.data) {
-          this.error = error.response.data.message || 'Ошибка обновления имени';
-        } else {
-          this.error = 'Ошибка соединения с сервером';
-        }
+        this.handleError(error, 'Ошибка обновления имени пользователя');
       }
+    },
+    handleError(error, defaultMessage) {
+      if (error.response && error.response.data) {
+        this.error = error.response.data.message || defaultMessage;
+      } else {
+        this.error = 'Ошибка соединения с сервером';
+      }
+
+      // Уведомление об ошибке
+      alert(this.error);
     },
   },
 };

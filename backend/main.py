@@ -109,14 +109,19 @@ def update_profile():
             return jsonify({"message": "Пользователь не найден"}), 404
 
         data = request.get_json()
-        new_username = data['username']
-        if new_username:
-            user.username = None
-            user.username = new_username
+        new_username = data.get('username')
 
-            session.commit()
-            return jsonify({"username": user.username}), 200
-        else: return jsonify({"message": "Изменение невозможно"}), 400
+        if not new_username:
+            return jsonify({"message": "Имя пользователя не может быть пустым"}), 400
+
+        # Проверяем, существует ли новое имя пользователя в базе данных
+        existing_user = session.query(User).filter(User.username == new_username).first()
+        if existing_user and existing_user.id != user_id:
+            return jsonify({"message": "Имя пользователя уже занято"}), 400
+
+        user.username = new_username
+        session.commit()
+        return jsonify({"username": user.username}), 200
 
 @app.route('/api/users/user/logout', methods=['POST'])
 def logout():
