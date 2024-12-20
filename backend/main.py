@@ -82,13 +82,13 @@ def log_in():
     data = request.get_json()
     username = data['username']
     password = data['password']
-    user = User.query.filter_by(username=username.lower()).first()
-    if user and check_password_hash(user.password, password):
-        access_token = create_access_token(identity=str(user.id))
-        return jsonify({"message": "Добро пожаловать!", "username": username.lower(), "access_token": access_token}), 200
-    else:
-        return jsonify({"status": "not_success", "message": "Неверное имя пользователя или пароль!"}), 401
-
+    with Session() as session:
+        user = session.query(User).filter_by(username=username.lower()).first()
+        if user and check_password_hash(user.password, password):
+            access_token = create_access_token(identity=str(user.id))
+            return jsonify({"message": "Добро пожаловать!", "username": username.lower(), "access_token": access_token}), 200
+        else:
+            return jsonify({"status": "not_success", "message": "Неверное имя пользователя или пароль!"}), 401
 @app.route('/api/users/user/profile', methods=['GET'])
 @jwt_required()
 def profile():
