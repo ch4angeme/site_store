@@ -2,7 +2,7 @@
   <div class="home-page">
     <h1 class="welcome-title">Добро пожаловать в наш магазин!</h1>
     <h6 class="info-message">
-      Ваши данные передаются в ФСБ <span class="emoji">😀</span>
+      <span class="emoji">😀</span>
     </h6>
 
     <section class="intro">

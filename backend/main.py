@@ -53,9 +53,10 @@ class CartItem(db.Model):
 ## Блок для каталога ##
 @app.route('/api/all_products', methods=['GET'])
 def get_all_products():
-    products = Product.query.all()
-    dict_db = [{"id": product.id, "name": product.title.rstrip(), "price": product.price, "status": product.isact,
-                "about": product.about} for product in products]
+    with Session() as session:
+        products = session.query(Product).all()
+        dict_db = [{"id": product.id, "name": product.title.rstrip(), "price": product.price, "status": product.isact,
+                    "about": product.about} for product in products]
     return jsonify({"results": dict_db})
 ####
 
@@ -65,15 +66,14 @@ def register():
     data = request.get_json()
     username = data['username']
     password = data['password']
-
-    if User.query.filter_by(username=username.lower()).first():
-        return jsonify({"status": "not_success", "message": "Пользователь уже существует!"})
-
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    current_time = datetime.now().strftime("%d-%m-%Y")
-    new_user = User(username=username.lower(), password=hashed_password, registrationdate=current_time)
-    db.session.add(new_user)
-    db.session.commit()
+    with Session() as session:
+        if session.query(User).filter_by(username=username.lower()).first():
+            return jsonify({"status": "not_success", "message": "Пользователь уже существует!"}), 409
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        current_time = datetime.now().strftime("%d-%m-%Y")
+        new_user = User(username=username.lower(), password=hashed_password, registrationdate=current_time)
+        session.add(new_user)
+        session.commit()
 
     return jsonify({"status": "success", "message": "Пользователь зарегистрирован!"}), 200
 
